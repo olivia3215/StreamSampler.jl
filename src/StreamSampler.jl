@@ -23,6 +23,9 @@ struct WRS{T}
     rng::AbstractRNG
     function WRS{T}(k::Int, rng::AbstractRNG) where {T}
         heap=BinaryMaxHeap{Entry{T}}()
+        if k < 1
+            error("Wighted random sampler requires k (number of samples to collect) to be >= 1. It is $k")
+        end
         sizehint!(heap, k)
         new(k, rng, heap)
     end

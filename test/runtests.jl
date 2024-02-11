@@ -33,4 +33,25 @@ using DataStructures
     @test issubset(should_contain, actually_contains)
 end
 
+@testset "Boundary conditions 1" begin
+    rng = Xoshiro(12345)
+    @test_throws ErrorException StreamSampler.WRS{Int}(0, rng)
+    @test_throws ErrorException StreamSampler.WRS{Int}(-1, rng)
+    StreamSampler.WRS{Int}(1, rng)
+end
+
+@testset "Boundary conditions 2" begin
+    rng = Xoshiro(12345)
+    k = 2
+    for i in 0:4
+        sampler = StreamSampler.WRS{Int}(k, rng)
+        for j in 1:i
+            push!(sampler, j, 1.0)
+        end
+        expected_size = if i < k; i; else k; end
+        r = result!(sampler)
+        @test length(r) == expected_size
+    end
+end
+
 end
