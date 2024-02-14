@@ -32,8 +32,18 @@ struct WRS{T}
     heap::BinaryMaxHeap{Entry{T}}
 end
 
+"""
+    push!(sampler, item)
+
+Adds the item to the sampler with weight 1.0.
+"""
 Base.push!(sampler::WRS{T}, item::T) where {T} = push!(sampler, item, 1.0)
 
+"""
+    push!(sampler, item, weight)
+
+Adds the item to the sampler with the given weight.
+"""
 function Base.push!(sampler::WRS{T}, item::T, weight::Float64) where {T}
     x = rand(sampler.rng, Float64)
     key = -log(x) / weight
@@ -47,6 +57,12 @@ function Base.push!(sampler::WRS{T}, item::T, weight::Float64) where {T}
     end
 end
 
+"""
+    result!(sampler)
+
+Returns the weighted random sample of the stream of values previously
+pushed to the sampler, and clears the sampler's reservoir.
+"""
 function result!(sampler::WRS{T}) where {T}
     map(x -> x.item, extract_all_rev!(sampler.heap))
 end
