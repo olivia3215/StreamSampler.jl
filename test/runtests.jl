@@ -1,12 +1,10 @@
-module StreamSamplerTests
-
 using StreamSampler
 using Test
 using Random
 using DataStructures
 
 @testset "check that weights are obeyed" begin
-    # We use a fixed seed so that we don't get occasional "lucky" faulures,
+    # We use a fixed seed so that we don't get occasional "lucky" failures,
     # since it is possible, however unlikely, to get a one-in-a-million
     # selection of one of the low-weighted values.
     rng = Xoshiro(12345)
@@ -54,4 +52,50 @@ end
     end
 end
 
+@testset "Weight validation" begin
+    rng = Xoshiro(12345)
+    sampler = StreamSampler.WRS{Int}(5, rng)
+    @test_throws ArgumentError push!(sampler, 1, 0.0)
+    @test_throws ArgumentError push!(sampler, 2, -1.0)
+    @test_throws ArgumentError push!(sampler, 3, -0.5)
+    # Positive weights should work
+    push!(sampler, 4, 1.0)
+    push!(sampler, 5, 0.1)
+    push!(sampler, 6, 100.0)
+    res = result!(sampler)
+    @test length(res) == 3
+end
+
+@testset "Two-argument push!" begin
+    rng = Xoshiro(12345)
+    sampler = StreamSampler.WRS{Int}(3, rng)
+    push!(sampler, 1)  # Should use default weight of 1.0
+    push!(sampler, 2)
+    push!(sampler, 3)
+    res = result!(sampler)
+    @test length(res) == 3
+    @test 1 in res
+    @test 2 in res
+    @test 3 in res
+end
+
+@testset "Empty sampler behavior" begin
+    rng = Xoshiro(12345)
+    sampler = StreamSampler.WRS{Int}(5, rng)
+    res = result!(sampler)
+    @test length(res) == 0
+    @test isempty(res)
+end
+
+@testset "result! clears reservoir" begin
+    rng = Xoshiro(12345)
+    sampler = StreamSampler.WRS{Int}(3, rng)
+    push!(sampler, 1, 1.0)
+    push!(sampler, 2, 1.0)
+    push!(sampler, 3, 1.0)
+    res1 = result!(sampler)
+    @test length(res1) == 3
+    res2 = result!(sampler)
+    @test length(res2) == 0
+    @test isempty(res2)
 end
